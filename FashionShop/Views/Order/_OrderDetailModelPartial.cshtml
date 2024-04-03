@@ -1,0 +1,167 @@
+﻿    @using FashionShop.Models
+@using FashionShop.Shared;
+@model FashionShop.Models.Order
+
+<div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="mb-0">Chi tiết hóa đơn <span class="font-weight-bold">#@Model.Code</span></h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <section>
+                <div class="container h-100">
+                    <div class="row d-flex justify-content-center align-items-center h-100">
+                        <div class="col-lg-12 col-xl-12">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="pay-t-m font-weight-bold mb-0">@((ViewBag.StatusListSelection as SelectList).FirstOrDefault(s => s.Value == Model.Status)?.Text)</p>
+                                <p class="small text-muted mb-0">@(Model.UpdatedAt?.ToString("dd/MM/yyyy hh:ss tt"))</p>
+                            </div>
+                            <div class="card shadow-0 border mb-4">
+                                <div class="card-body pt-1">
+                                    @foreach (var item in Model.OrderDetails)
+                                    {
+                                        <div class="row border-bottom py-2 mx-auto">
+                                            <div class="col-md-2">
+                                                <img src="~/Assets/images/product/@(item.Product?.Image)"
+                                                     class="img-fluid rounded" alt="@(item.Product?.Name)">
+                                            </div>
+                                            <div class="col-md-4 pl-0 d-flex justify-content-start align-items-center">
+                                                <p class="mb-0">@(item.Product?.Name)</p>
+                                            </div>
+                                            <div class="col-md-2 text-center d-flex flex-column justify-content-center align-items-center">
+                                                <p class="text-muted mb-0 small">
+                                                    <span class="badge badge-dot" style="background-color:@(item.Product?.Color?.Code)"></span>
+                                                    <span class="text-uppercase">@(item.Product?.Color?.Name)</span>
+                                                </p>
+                                                <p class="text-muted mb-0 small">Size: <span class="text-uppercase">@(item.Product?.Size?.Code)</span></p>
+                                            </div>
+                                            <div class="col-md-2 text-center d-flex justify-content-center align-items-center">
+                                                <p class="text-muted mb-0 small">Số lượng: @(item.Quantity)</p>
+                                            </div>
+                                            <div class="col-md-2 text-center d-flex justify-content-center align-items-center p-0">
+                                                <p class="text-muted mb-0 small">@(item.Total?.ToString("n0")) VNĐ</p>
+                                            </div>
+                                        </div>
+                                    }
+                                    <div class="mt-4">
+                                        @{
+                                            string tranStatus(string status)
+                                            {
+                                                switch (status)
+                                                {
+                                                    case StatusConst.WAITCONFIRM:
+                                                        return StatusConst.WAITCONFIRM;
+                                                    case StatusConst.WAITSETUP:
+                                                    case StatusConst.WAITSHIP:
+                                                        return StatusConst.WAITSETUP;
+                                                    case StatusConst.SHIPPING:
+                                                    case StatusConst.DELIVERED:
+                                                        return StatusConst.SHIPPING;
+                                                    case StatusConst.DONE:
+                                                        return StatusConst.DONE;
+                                                }
+                                                return StatusConst.DONE;
+                                            }
+                                        }
+                                        @if (!(ViewBag.ExceptStatusList as Dictionary<string, string>).Any(a => a.Key == Model.Status))
+                                        {
+                                            <div class="d-flex flex-row justify-content-between align-items-center align-content-center">
+                                                @foreach (var item in ViewBag.StatusListProgress as Dictionary<string, string>)
+                                                {
+                                                    if (item.Key == tranStatus(Model.Status))
+                                                    {
+                                                        if (item.Key == StatusConst.WAITCONFIRM)
+                                                        {
+                                                            <span class="d-flex justify-content-center align-items-center big-dot dot">
+                                                                <i class="fa fa-check text-white"></i>
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <hr class="flex-fill track-line"><span class="d-flex justify-content-center align-items-center big-dot dot">
+                                                                <i class="fa fa-check text-white"></i>
+                                                            </span>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        if (item.Key == StatusConst.WAITCONFIRM)
+                                                        {
+                                                            <span class="dot"></span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <hr class="flex-fill track-line"><span class="dot"></span>
+                                                        }
+                                                    }
+                                                }
+                                            </div>
+                                            <div class="d-flex flex-row justify-content-between align-items-center">
+                                                @foreach (var item in ViewBag.StatusListProgress as Dictionary<string, string>)
+                                                {
+                                                    if (item.Key == StatusConst.WAITCONFIRM)
+                                                    {
+                                                        <div class="d-flex flex-column align-items-start">
+                                                            <span>@item.Value</span><span></span>
+                                                        </div>
+                                                    }
+                                                    else if (item.Key == StatusConst.DONE)
+                                                    {
+                                                        <div class="d-flex flex-column align-items-end">
+                                                            <span>@item.Value</span><span></span>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="d-flex flex-column justify-content-center">
+                                                            <span>@item.Value</span><span></span>
+                                                        </div>
+                                                    }
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <p class="text-muted">Lý do: @(Model.Reason)</p>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <!--purchase-->
+                            <section class="px-2">
+                                <div class="d-flex justify-content-between pt-2">
+                                    <p class="font-weight-bold mb-0">Tổng tiền</p>
+                                    <p class="text-muted mb-0">@((Model.OrderDetails?.Sum(o => o.Total))?.ToString("n0"))</p>
+                                </div>
+
+                                <div class="d-flex justify-content-between pt-2">
+                                    <p class="text-muted mb-0">Ngày đặt : @(Model.CreatedAt?.ToString("dd/MM/yyyy hh:ss tt"))</p>
+                                    <p class="text-muted mb-0"><span class="font-weight-bold me-4">Giảm giá : </span> @((Model.Discount)?.ToString("n0"))</p>
+                                </div>
+
+                                <div class="d-flex justify-content-between mb-5">
+                                    <p class="text-muted mb-0">Voucher : @((Model.OrderDetails?.Sum(o => o.Total) + Model.ShipFee - Model.Total)?.ToString("n0"))</p>
+                                    <p class="text-muted mb-0"><span class="font-weight-bold me-4">Phí giao hàng : </span>@((Model.ShipFee)?.ToString("n0"))</p>
+                                </div>
+                            </section>
+                            @if (!(ViewBag.ExceptStatusList as Dictionary<string, string>).Any(a => a.Key == Model.Status))
+                            {
+                                <div class="border-0 total-paid-modal px-3 py-5">
+                                    <h5 class="d-flex align-items-center justify-content-end text-white text-uppercase mb-0">
+                                        Tiền phải trả :<span class="h2 mb-0 mx-2">@((Model.Total)?.ToString("n0")) VNĐ</span>
+                                    </h5>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+        </div>
+    </div>
+</div>

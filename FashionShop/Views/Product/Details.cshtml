@@ -1,0 +1,457 @@
+﻿@using FashionShop.Shared
+@model FashionShop.Models.Product
+
+@{
+    ViewData["Title"] = "Chi tiết sản phẩm";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles{
+    <link rel="stylesheet" href="~/Content/product/css/style.css">
+}
+<div class="page-header">
+    <div class="header-sub-title">
+        <nav class="breadcrumb breadcrumb-dash">
+            <a href="@Url.Action("Index","Home")" class="breadcrumb-item"><i class="fa-solid fa-house mr-1"></i>Trang chủ</a>
+            <a href="@Url.Action("Index","Product")" class="breadcrumb-item">Sản phẩm</a>
+            <span class="breadcrumb-item active">Chi tiết sản phẩm</span>
+        </nav>
+    </div>
+</div>
+<div class="container">
+    <div class="card">
+        <div class="row g-0">
+            <div class="col-md-6 border-end ">
+                <div class="justify-content-center">
+                    <div class="main_image">
+                        <img id="main_product_image" class="zoom-in" src="~/Assets/images/product/@Model.Image" alt="@Model.Name"
+                             width="500">
+                    </div>
+                    <div class="thumbnail_images">
+                        <ul id="thumbnail">
+                            <li><img onclick="changeImage(this)" src="~/Assets/images/product/@Model.Image" width="70" height="70" style="object-fit: contain"></li>
+                            <li><img onclick="changeImage(this)" src="~/Assets/images/product/@Model.Image" width="70" height="70" style="object-fit: contain"></li>
+                            <li><img onclick="changeImage(this)" src="~/Assets/images/product/@Model.Image" width="70" height="70" style="object-fit: contain"></li>
+                            <li><img onclick="changeImage(this)" src="~/Assets/images/product/@Model.Image" width="70" height="70" style="object-fit: contain"></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="px-3 pb-5 right-side h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="fw-bold">@(Model.Name)</h4>
+                        <span class="heart"><i class="far fa-heart"></i></span>
+                    </div>
+                    <div class="mt-2 pr-3 content">
+                        <p>
+                            Khuyến mãi...
+                        </p>
+                    </div>
+                    <h3 class="fw-bold">
+                        @if (Model.Price != (Model.Price - (Model.Discount ?? 0)))
+                        {
+                            <span class="fw-normal text-decoration-line-through fs-5 mr-2">@(Model.Price?.ToString("n0"))</span>
+                        }
+                        <span class="m-gg-b">@((Model.Price - (Model.Discount ?? 0))?.ToString("n0")) VNĐ</span>
+                    </h3>
+                    <div class="ratings d-flex flex-row align-items-center">
+                        <div class="d-flex flex-row">
+                            @{
+                                double RoundToNearestHalf(double number)
+                                {
+                                    // Làm tròn số về đơn vị 0.5
+                                    return Math.Round(number * 2, MidpointRounding.AwayFromZero) / 2;
+                                }
+                            }
+                            @{
+                                var avg = Model.Feedbacks?.Average(f => f.Rate);
+                                avg = RoundToNearestHalf(avg ?? 0);
+                                if (avg == 0)
+                                {
+                                    <i class="fas fa-star star-lg"></i>
+                                    <i class="fas fa-star star-lg"></i>
+                                    <i class="fas fa-star star-lg"></i>
+                                    <i class="fas fa-star star-lg"></i>
+                                    <i class="fas fa-star star-lg"></i>
+                                }
+                                else
+                                {
+                                    for (int i = 1; i <= avg; i++)
+                                    {
+                                        <i class="fas fa-star star-lg"></i>
+                                        if (avg - i == 0.5)
+                                        {
+                                            <i class="fa-solid fa-star-half-stroke star-lg"></i>
+                                        }
+                                    }
+                                    for (int i = 1; i <= 5 - avg; i++)
+                                    {
+                                        <i class="far fa-star star-lg"></i>
+                                    }
+                                }
+                            }
+                        </div>
+                        <span>24 reviews</span>
+                    </div>
+                    <div class="info mt-3">
+                        <dl class="row mb-0">
+                            <dt class="col-3">Loại:</dt>
+                            <dd class="col-9">@(Model.Category?.Name)</dd>
+
+                            <dt class="col-3">Thương hiệu</dt>
+                            <dd class="col-9">@(Model.Branch?.Name)</dd>
+
+                            <dt class="col-3">Kho</dt>
+                            <dd id="max-quantity" class="col-9">@(Model.Quantity)</dd>
+                        </dl>
+                    </div>
+                    <div class="mt-2">
+                        <span class="font-weight-bold text-uppercase font-size-14">Màu sắc</span>
+                        <div class="colors">
+                            @foreach (var item in ViewBag.ColorSize as List<FashionShop.AreaModels.ViewColorSizeModel>)
+                            {
+                                <input type="radio" name="color" id="color-@(item.Color?.Id)" value="@(item.Color?.Id)" />
+                                <label for="color-@(item.Color?.Id)">
+                                    <span class="radio-span-color" style="background-color:@(item.Color?.Code)"></span>
+                                </label>
+                            }
+                        </div>
+                        <span class="font-weight-bold text-uppercase font-size-14">Kích thước</span>
+                        <div class="sizes">
+                            @foreach (var item in ViewBag.FullSize as List<FashionShop.Models.Size>)
+                            {
+                                <input type="radio" name="size" id="size-@(item.Id)" value="@(item.Id)" />
+                                <label for="size-@(item.Id)">
+                                    <span class="radio-span-size">@(item.Code)</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="product-count d-flex">
+                            <input type="button" value="-" class="qtyminus decre" data-productid="@Model.Id">
+                            <input id="@($"quantity-{Model.Id}")" type="text" name="quantity" readonly value="1" class="qty">
+                            <input type="button" value="+" class="qtyplus incre" data-productid="@Model.Id">
+                        </div>
+                    </div>
+                    <div class="buttons action d-flex flex-row my-4 gap-3">
+                        <button id="@Model.Id" class="btn btn-outline-dark" onclick="AddCart(this.id)">Thêm vào giỏ hàng</button>
+                        <button id="@Model.Id" class="btn btn-dark" onclick="Checkout(this.id)">Mua ngay</button>
+                    </div>
+                    <div class="search-option">
+                        <i class='fas fa-search first-search'></i>
+                        <div class="inputs"> <input type="text" name=""> </div> <i class='bx bx-share-alt share'></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section class="card py-4">
+        <div class="container">
+            <div class="row gx-4">
+                <div class="col-lg-8 mb-4">
+                    <div class="border rounded-2 px-3 py-2">
+                        <!-- Pills navs -->
+                        <ul class="nav nav-pills nav-justified mb-3" id="ex1" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link border-0 active" id="ex1-tab-1" data-toggle="tab" href="#tab-description" role="tab" aria-controls="description" aria-selected="true">Chi tiết</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link border-0" id="ex1-tab-2" data-toggle="tab" href="#tab-rate" role="tab" aria-controls="rate" aria-selected="true">Đánh giá</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link border-0" id="ex1-tab-3" data-toggle="tab" href="#tab-instruct" role="tab" aria-controls="instruct" aria-selected="true">Hướng dẫn chọn size</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link border-0" id="ex1-tab-4" data-toggle="tab" href="#tab-warranty" role="tab" aria-controls="warranty" aria-selected="true">Chính sách đổi trả</a>
+                            </li>
+                        </ul>
+                        <!-- Pills navs -->
+                        <!-- Pills content -->
+                        <div class="tab-content" id="ex1-content">
+                            <div class="tab-pane fade show active" id="tab-description" role="tabpanel" aria-labelledby="description-tab">
+                                <div class="px-2 py-3">
+                                    @Html.Raw(Model.Description)
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="tab-rate" role="tabpanel" aria-labelledby="rate-tab" >
+                                <div class="px-2 py-3" style="font-size:0.8rem">
+                                    <div class="review-heading">Đánh giá của người khác</div>
+                                    @{
+                                        if (Model.Feedbacks?.Count > 0)
+                                        {
+                                            foreach (var item in Model.Feedbacks)
+                                            {
+                                                <div class="d-flex align-items-center my-1">
+                                                    <div style="max-width:60px !important">
+                                                        <img src="~/Assets/images/customer/default.jpg"
+                                                             alt=""
+                                                             style="width: 40px; height: 40px"
+                                                             class="avatar avatar-image rounded" />
+                                                    </div>
+                                                    <div class="mx-3">
+                                                        <p class="font-weight-bold mb-1">@item.Name</p>
+                                                        <p class="mb-0 text-nowrap">Nhận xét: @item.Message</p>
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <p class="text-muted mb-20">Chưa có đánh giá nào.</p>
+                                        }
+
+                                    }
+                                <form class="review-form" action="@Url.Action("Feedback","Product")" method="post">
+                                    <input type="hidden" name="productid" value="@Model.Id" />
+                                    <div class="form-group">
+                                        <label>Đánh giá của bạn</label>
+                                        <div class="reviews-counter">
+                                            <div class="rate">
+                                                <input type="radio" id="star55" name="rate" value="5" />
+                                                <label for="star55" title="Rất tốt">5 stars</label>
+                                                <input type="radio" id="star44" name="rate" value="4" />
+                                                <label for="star44" title="Tốt">4 stars</label>
+                                                <input type="radio" id="star33" name="rate" value="3" />
+                                                <label for="star33" title="Khá">3 stars</label>
+                                                <input type="radio" id="star22" name="rate" value="2" />
+                                                <label for="star22" title="Trung bình">2 stars</label>
+                                                <input type="radio" id="star11" name="rate" value="1" />
+                                                <label for="star11" title="Kém">1 star</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <input type="text" name="name" required class="form-control" placeholder="Tên">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <input type="text" name="phone" required pattern="[0-9]{10}" class="form-control" placeholder="Số điện thoại">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Nhận xét</label>
+                                        <textarea class="form-control w-100" name="message" rows="4"></textarea>
+                                    </div>
+
+                                    <button type="submit" class="round-black-btn">Gửi đánh giá</button>
+                                </form>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="tab-instruct" role="tabpanel" aria-labelledby="description-tab" style="font-family: 'Quicksand', sans-serif !important;">
+                                <div class="px-2 py-3">
+                                    <img class="img-fluid" src="~/Assets/images/size/instruct.jpg" />
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="tab-warranty">
+                                <div class="px-2 py-3">
+                                    <div class="row mb-2">
+                                        <div class="col-12 col-md-6">
+                                            <ul class="policyProduct policyCart clearfix">
+                                                <li><i class="fas fa-check text-success mr-2"></i>Free ship cho đơn hàng trên 400,000đ.</li>
+                                                <li><i class="fas fa-check text-success mr-2"></i>Mức phí: 30,000đ nội thành và&nbsp;40,000đ ngoại thành</li>
+                                                <li><i class="fas fa-check text-success mr-2"></i>Được kiểm tra hàng trước khi nhận hàng</li>
+
+                                            </ul>
+                                        </div>
+                                        <div class="col-12 col-md-6 mb-0">
+                                            <ul class="policyProduct policyCart clearfix">
+                                                <li><i class="fas fa-check text-success mr-2"></i>Đổi hàng trong vòng 30 ngày kể từ khi nhận hàng</li>
+                                                <li><i class="fas fa-check text-success mr-2"></i>Không áp dụng đổi/trả sản phẩm trong CTKM</li>
+                                                <li><i class="fas fa-check text-success mr-2"></i>Miễn phí đổi trả nếu lỗi sai sót từ phía atino.vn</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="px-0 border rounded-2 shadow-0">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Sản phẩm tương tự</h5>
+                                @if ((ViewBag.ProductByBranchAndCategory as List<FashionShop.Models.Product>).Count > 0)
+                                {
+                                    foreach (var item in ViewBag.ProductByBranchAndCategory as List<FashionShop.Models.Product>)
+                                    {
+                                        <a href="@Url.Action("Details", new {id = item.Id})" class="text-reset">
+                                            <div class="d-flex align-items-center mb-3" style="font-size:0.8rem">
+                                                <div class="mr-3">
+                                                    <img class="img-md img-thumbnail" src="~/Assets/images/product/@item.Image" style="min-width: 96px; height: 96px; object-fit: contain" />
+                                                </div>
+                                                <div class="info d-flex flex-sm-column">
+                                                    <span class="sample-prod-name">
+                                                        @(item.Name)
+                                                    </span>
+                                                    <span class="sample-prod-info">@(item.Category?.Name)</span>
+                                                    <span class="sample-prod-info">
+                                                        <span class="fw-normal text-decoration-line-through mr-1">@(item.Price?.ToString("n0"))</span>
+                                                        <span class="fw-bold m-gg">@((item.Price - (item.Discount ?? 0))?.ToString("n0"))</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Trống</span>
+                                }
+                                
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 px-0 shadow-0">
+                        <ul class="policyProduct policyCart clearfix ms-2">
+                            <li>
+                                <img class="lazyautosizes lazyloaded" data-sizes="auto" src="https://web.nvnstatic.net/tp/T0298/img/tmp/img_policy_1.png?v=3" data-src="https://web.nvnstatic.net/tp/T0298/img/tmp/img_policy_1.png?v=3" alt="free ship" sizes="20px">
+                                <span class="infoPolicy">
+                                    GIAO HÀNG NỘI THÀNH TRONG 24 GIỜ
+                                </span>
+                            </li>
+                            <li>
+                                <img class="lazyautosizes lazyloaded" data-sizes="auto" src="https://web.nvnstatic.net/tp/T0298/img/tmp/img_policy_3.png?v=3" data-src="https://web.nvnstatic.net/tp/T0298/img/tmp/img_policy_3.png?v=3" alt="Return" sizes="20px">
+                                <span class="infoPolicy">
+                                    ĐỔI HÀNG TRONG 30 NGÀY
+                                </span>
+                            </li>
+                            <li>
+                                <img class="lazyautosizes lazyloaded" data-sizes="auto" src="https://web.nvnstatic.net/tp/T0298/img/tmp/img_policy_4.png?v=3" data-src="https://web.nvnstatic.net/tp/T0298/img/tmp/img_policy_4.png?v=3" alt="Hotline" sizes="20px">
+                                <span class="infoPolicy">
+                                    TỔNG ĐÀI BÁN HÀNG 0987 104 816
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+@section scripts{
+    <script src="~/Content/product/js/script.js"></script>
+    <script>
+        function AddCart(productid) {
+            var selected = GetColorAndSizeSelected();
+            var qty = $(".qty").val();
+            if (selected != null) {
+                $.ajax({
+                    type: "POST",
+                    url:"@Url.Action("AddToCart","Cart")",
+                    data: {
+                        productid: productid,
+                        colorid: selected.color,
+                        sizeid: selected.size,
+                        quantity: qty
+                    },
+                    success: function (result) {
+                        if (result.success) {
+                            displayMessage(result.message, '', 'success');
+                        } else {
+                            displayMessage(result.message, '', 'error');
+                        }
+                    },
+                    error: function (results) {
+                        alert(results.message);
+                    }
+                });
+            }
+
+        }
+
+        function Checkout(productid) {
+            var selected = GetColorAndSizeSelected();
+            var qty = $(".qty").val();
+            if (selected != null) {
+                $.ajax({
+                    type: "POST",
+                    url:"@Url.Action("AddToCart","Cart")",
+                    data: {
+                        productid: productid,
+                        colorid: selected.color,
+                        sizeid: selected.size,
+                        quantity: qty
+                    },
+                    success: function (result) {
+                        if (result.success) {
+                            window.location.href = "@Url.Action("Index", "Cart")";
+                        } else {
+                            displayMessage(result.message, '', 'error');
+                        }
+                    },
+                    error: function (results) {
+                        alert(results.message);
+                    }
+                });
+            }
+
+        }
+        function GetColorAndSizeSelected() {
+            // Lấy tất cả các input radio với name là 'size'
+            var sizeRadios = document.getElementsByName('size');
+            var colorRadios = document.getElementsByName('color');
+
+            // Biến kiểm tra xem có radio nào được chọn không
+            var isCheckedColor = false;
+            var isCheckedSize = false;
+
+            // Biến chứa giá trị của radio được chọn
+            var selectedColor = '';
+            var selectedSize = '';
+
+            // Duyệt qua tất cả các radio
+            for (var i = 0; i < colorRadios.length; i++) {
+                if (colorRadios[i].checked) {
+                    isCheckedColor = true;
+                    selectedColor = colorRadios[i].value;
+                    break; // Đã tìm thấy radio được chọn, thoát khỏi vòng lặp
+                }
+            }
+            for (var i = 0; i < sizeRadios.length; i++) {
+                if (sizeRadios[i].checked) {
+                    isCheckedSize = true;
+                    selectedSize = sizeRadios[i].value;
+                    break; // Đã tìm thấy radio được chọn, thoát khỏi vòng lặp
+                }
+            }
+
+            // Kiểm tra xem có radio được chọn không
+            if (isCheckedSize && isCheckedColor) {
+                // Có radio được chọn, làm gì đó với selectedSize
+                return { size: selectedSize, color: selectedColor };
+            } else {
+                // Không có radio nào được chọn, alert báo lỗi
+                displayMessage('Vui long chọn đầy đủ màu và kích thước', '', 'error');
+                return null;
+            }
+        }
+
+        $(document).ready(function () {
+            $(".qtyminus").on("click", function () {
+                var now = $(".qty").val();
+                if ($.isNumeric(now)) {
+                    if (parseInt(now) - 1 > 0) { now--; }
+                    $(".qty").val(now);
+                }
+            })
+            $(".qtyplus").on("click", function () {
+                var now = $(".qty").val();
+                var quantityValue = $("#max-quantity").text(); // Lấy giá trị của thẻ span có id='quantity'
+
+                if ($.isNumeric(now)) {
+                    // Kiểm tra xem giá trị hiện tại có bằng với giá trị của thẻ span không
+                    if (parseInt(now) !== parseInt(quantityValue)) {
+                        $(".qty").val(parseInt(now) + 1);
+                    }
+                }
+            });
+        });
+    </script>
+}

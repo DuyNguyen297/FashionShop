@@ -1,0 +1,329 @@
+﻿@using FashionShop.Models
+@model List<FashionShop.Models.Cart>
+@{
+    ViewData["Title"] = "Mua lại";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles{
+    <link rel="stylesheet" href="~/Content/card/css/style.css">
+}
+<div class="page-header">
+    <div class="header-sub-title">
+        <nav class="breadcrumb breadcrumb-dash">
+            <a href="@Url.Action("Index","Home")" class="breadcrumb-item"><i class="fa-solid fa-house mr-1"></i>Trang chủ</a>
+            <a href="@Url.Action("Index", "Order")" class="breadcrumb-item">Đơn hàng</a>
+            <span class="breadcrumb-item active">Mua lại</span>
+        </nav>
+    </div>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col-md-5 order-md-2 mb-4 sticky-top">
+            <h4 class="d-flex justify-content-between align-items-center mb-3">
+                <span class="text-muted fw-bold">Sản phẩm</span>
+                <span class="badge badge-secondary badge-pill">@Model.Count</span>
+            </h4>
+
+            <ul class="list-group mb-3">
+                @{
+                    decimal? total = 0;
+                    decimal? shipfee = Model.Count > 0 ? 30000 : 0;
+                }
+                @foreach (var item in Model)
+                {
+                    <li class="list-group-item d-flex justify-content-between lh-condensed">
+                        <div>
+                            <h6 class="my-0">@(item.Product?.Name)</h6>
+                            <small class="text-muted">Số lượng: @item.Quantity</small>
+                        </div>
+                        @{
+                            total += (item.Product?.Price - (item.Product?.Discount ?? 0)) * item.Quantity;
+                            <span class="text-muted">@(((item.Product?.Price - (item.Product?.Discount ?? 0)) * item.Quantity)?.ToString("n0"))VNĐ</span>
+                        }
+
+                    </li>
+                }
+
+                <li class="list-group-item d-flex justify-content-between bg-light">
+                    <div class="text-success">
+                        <h6 class="my-0">Khuyến mãi</h6>
+                        <small>Free Ship</small>
+                    </div>
+                    <div class="m-b-15 w-50">
+                        <div>
+                            <select id="voucher-ship-select" class="select2" name="vouchership" onchange="selectedVoucherChanged(this.id,'ship')">
+                                @{
+                                    var voucherShips = (ViewBag.Voucher as List<FashionShop.AreaModels.CreateVoucherModel>).Where(v => v.VoucherType == FashionShop.Shared.VoucherTypeConst.VOUCHERSHIP).ToList();
+                                    <option id="nan" name="ship" value="0">Chọn voucher free ship</option>
+                                    foreach (var item in voucherShips)
+                                    {
+                                        <option id="@item.Id" name="@item.VoucherType" value="@item.Discount">@item.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between bg-light">
+                    <div class="text-success">
+                        <h6 class="my-0">Voucher</h6>
+                        <small>Của bạn</small>
+                    </div>
+                    <div class="m-b-15 w-50">
+                        <div>
+                            <select id="voucher-other-select" class="select2" name="voucherother" onchange="selectedVoucherChanged(this.id,'other')">
+                                @{
+                                    var voucherOthers = (ViewBag.Voucher as List<FashionShop.AreaModels.CreateVoucherModel>).Except(voucherShips);
+                                    <option id="nan" name="other" value="0">Chọn voucher của bạn</option>
+                                    foreach (var item in voucherOthers)
+                                    {
+                                        <option id="@item.Id" name="@item.VoucherType" value="@item.Discount">@item.Name</option>
+                                    }
+                                }
+                            </select>
+                            @*<select class="select2" name="voucherother" multiple="multiple" onchange="selectedOtherChanged()">
+                                    <option value="AP">Apples</option>
+                                    <option value="NL">Nails</option>
+                                    <option value="BN">Bananas</option>
+                                    <option value="HL">Helicopters</option>
+                                    @{
+                                        var voucherOthers = ViewBag.VoucherShip as List<VoucherShip>;
+                                        foreach (var item in voucherOthers)
+                                        {
+                                            <option id="@item.Id" value="@item.Discount">@item.Name</option>
+                                        }
+                                    }
+                                </select>*@
+                        </div>
+                    </div>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>Phí giao hàng (VNĐ)</span>
+                    <span class="text-muted d-none" id="shipping-fee">30000</span>
+                    <span class="text-muted">30,000</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>Tổng cộng (VNĐ)</span>
+                    <strong class="d-none" id="total_temp">@((total + shipfee))</strong>
+                    <strong id="total">@((total + shipfee)?.ToString("n0").Replace(".",","))</strong>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>Giảm giá (VNĐ)</span>
+                    <span class="d-none" id="discount_ship">0</span>
+                    <span class="d-none" id="discount_other">0</span>
+                    <span class="text-muted" id="discount">0</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>Tiền phải trả (VNĐ)</span>
+                    <strong id="total_pay_temp" class="d-none">@((total + shipfee))</strong>
+                    <strong id="total_pay">@((total + shipfee)?.ToString("n0").Replace(".", ","))</strong>
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-7 order-md-1">
+            <h4 class="mb-3 fw-bold">Thông tin thanh toán</h4>
+            <form class="needs-validation" method="post" action="@Url.Action("ReCheckOut")">
+                @Html.AntiForgeryToken()
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label for="firstName">Họ và Tên</label>
+                        <input type="text" class="form-control form-control-sm" id="name" name="Name" placeholder="Tên" value="@ViewBag.Name" required>
+                    </div>
+
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="lastName">Số điện thoại</label>
+                        <input type="tel" class="form-control form-control-sm" id="phone" name="Phone" placeholder="Số điện thoại" pattern="[0-9]{10}" value="@ViewBag.Phone" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="firstName">Email</label>
+                        <input type="email" class="form-control form-control-sm" id="email" name="Email" placeholder="Email" value="@ViewBag.Email" required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="firstName">Tỉnh/Thành phố</label>
+                        <select class="custom-select custom-select-sm" id="province" name="Province" style="min-width: 200px;" required>
+                            @{
+                                <option value="nan" selected>Chọn Tỉnh/Thành phố</option>
+                                var listProvince = ViewBag.Province as List<Province>;
+                                foreach (var item in listProvince)
+                                {
+                                    <option value="@item.Id">@item.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="firstName">Quận/Huyện</label>
+                        <select class="custom-select custom-select-sm" id="district" name="District" style="min-width: 200px;" required>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="lastName">Phường/Xã</label>
+                        <select class="custom-select custom-select-sm" id="ward" name="Ward" style="min-width: 200px;" required>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label for="firstName">Địa chỉ</label>
+                        <input type="text" class="form-control w-100  form-control-sm" id="address" name="Address" placeholder="Ghi rõ số nhà, đường..." value="@ViewBag.Address" required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label for="optionPay">Hình thức thanh toán</label>
+                        <div class="d-flex text-center">
+                            <div class="w-50">
+                                <input type="radio" name="payoption" value="ship" id="success-outlined" autocomplete="off" checked>
+                                <label class="btn rounded border w-90 p-1 align-items-center" for="success-outlined"><i class="fa-solid fa-truck text-primary pr-2"></i>Thanh toán khi nhận hàng</label>
+                            </div>
+                            <div class="w-50">
+                                <input type="radio" name="payoption" value="momo" id="danger-outlined" autocomplete="off">
+                                <label class="btn rounded border w-90 p-1 align-items-center" for="danger-outlined"><i class="fab fa-cc-mastercard fa-lg text-danger pr-2"></i>Thanh toán bằng MoMo</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr class="mb-1">
+                <button class="btn btn-lg btn-block round-black-btn" type="submit">Đặt hàng</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+@section scripts{
+    <script>
+        function selectedVoucherChanged(id,type) {
+            var dropdown = document.getElementById(id);
+
+            // Lấy index của option được chọn
+            var selectedIndex = dropdown.selectedIndex;
+
+            // Lấy phần tử <option> được chọn
+            var selectedOption = dropdown.options[selectedIndex];
+
+            // Lấy giá trị id,name của option được chọn
+            var selectedOptionId = selectedOption.id;
+            var selectedOptionName = selectedOption.getAttribute("name");
+            $.ajax({
+                 url: '@Url.Action("SelectVoucher")',
+                 type: 'POST',
+                 data: {
+                     voucherId: selectedOptionId,
+                     type: selectedOptionName
+                 },
+                success: function (data) {
+                    if (data.status == 'success') {
+                        var selectedDiscount = parseFloat(document.getElementById(id).value);
+                        // Phí giao hàng cố định (30,000 VNĐ)
+                        // Tính toán tổng cộng
+                        var total = parseFloat(document.getElementById('total_temp').innerText);
+                        var total_pay = parseFloat(document.getElementById('total_pay_temp').innerText);
+                        var discountShip = parseFloat(document.getElementById('discount_ship').innerText);
+                        var discountOther = parseFloat(document.getElementById('discount_other').innerText);
+
+                        var total_discount = 0;
+                        if (type == 'ship') {
+                            total_discount = selectedDiscount + discountOther;
+                            document.getElementById('discount_ship').innerText = selectedDiscount.toString();
+                        }
+                        else if (type == 'other') {
+                            total_discount = selectedDiscount + discountShip;
+                            document.getElementById('discount_other').innerText = selectedDiscount.toString();
+                        }
+
+                        var discountedTotal = Math.max(0, total - total_discount);
+
+
+                        document.getElementById('total_pay_temp').innerText = discountedTotal.toString();
+
+                        // Cập nhật giá trị trong HTML
+
+                        document.getElementById('discount').innerText = total_discount.toLocaleString();
+                        document.getElementById('total_pay').innerText = discountedTotal.toLocaleString();
+
+                    } else if (data.status == 'warning') {
+                        $("#" + id).select2("val", "0");
+                    }
+                    displayMessage(data.message, '', data.status);
+                 },
+                 error: function () {
+                     alert("Có lỗi xảy ra")
+                 }
+            });
+
+        }
+
+        ////////
+        $(document).ready(function () {
+            // Load danh sách tỉnh/thành phố
+            // Sự kiện khi tỉnh/thành phố thay đổi
+            $('#province').change(function () {
+                var selectedProvince = $(this).val();
+                if (selectedProvince == 'nan') {
+                    $('#district').empty();
+                    $('#ward').empty();
+                }
+                else {
+                    // Gọi hàm Ajax để lấy danh sách quận/huyện tương ứng với tỉnh/thành phố
+                    $.ajax({
+                        url: '@Url.Action("GetDistrictByProvinceId")',
+                        type: 'GET',
+                        data: { provinceId: selectedProvince },
+                        success: function (data) {
+                            // Xử lý dữ liệu trả về và cập nhật danh sách quận/huyện
+                            $('#district').empty();
+
+                            // Duyệt qua danh sách quận/huyện và thêm vào dropdown
+                            $.each(data.data, function (index, district) {
+                                $('#district').append($('<option>', {
+                                    value: district.Id,
+                                    text: district.Name
+                                }));
+                            });
+
+                            // Trigger sự kiện change để cập nhật danh sách phường/xã
+                            $('#district').change();
+                        },
+                        error: function () {
+                            console.log('Error while retrieving districts.');
+                        }
+                    });
+                }
+
+            });
+
+            // Sự kiện khi quận/huyện thay đổi
+            $('#district').change(function () {
+                var selectedDistrict = $(this).val();
+
+                // Gọi hàm Ajax để lấy danh sách phường/xã tương ứng với quận/huyện
+                $.ajax({
+                    url:  '@Url.Action("GetWardByDistrictId")',
+                    type: 'GET',
+                    data: { districtId: selectedDistrict },
+                    success: function (data) {
+                        // Xử lý dữ liệu trả về và cập nhật danh sách phường/xã
+                        // Xóa danh sách phường/xã hiện tại
+                        $('#ward').empty();
+
+                        // Duyệt qua danh sách phường/xã và thêm vào dropdown
+                        $.each(data.data, function (index, ward) {
+                            $('#ward').append($('<option>', {
+                                value: ward.Id,
+                                text: ward.Name
+                            }));
+                        });
+                    },
+                    error: function () {
+                        console.log('Error while retrieving wards.');
+                    }
+                });
+            });
+        });
+    </script>
+}

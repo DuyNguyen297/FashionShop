@@ -1,0 +1,273 @@
+﻿@using FashionShop.Models
+@using FashionShop.Shared;
+@using PagedList.Mvc
+@model PagedList.IPagedList<FashionShop.Models.Order>
+@{
+    int CurrentPage = ViewBag.CurrentPage;
+    ViewData["Title"] = "Lịch sử đơn hàng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles{
+    <link rel="stylesheet" href="~/Content/order/css/style.css">
+}
+<div class="page-header">
+    <div class="header-sub-title">
+        <nav class="breadcrumb breadcrumb-dash">
+            <a href="@Url.Action("Index","Home")" class="breadcrumb-item"><i class="fa-solid fa-house mr-1"></i>Trang chủ</a>
+            <span class="breadcrumb-item active">Đơn hàng</span>
+        </nav>
+    </div>
+</div>
+<div class="container">
+    <div class="wrapper d-flex" style="font-size:0.9em">
+        <nav id="sidebar">
+            <div class="info-user-order d-flex align-items-center p-2">
+                <div>
+                    <img src="~/Assets/images/account/user-3.jpg"
+                         alt=""
+                         style="width: 60px; height: 60px"
+                         class="avatar avatar-image" />
+                </div>
+                <div class="mx-3">
+                    <p class="font-weight-semibold text-break mb-1">@(Session[Const.USERNAMESESSION]?.ToString())</p>
+                    <p class="font-weight-semibold text-break mb-0">@(Session[Const.USERPHONESESSION]?.ToString())</p>
+                </div>
+            </div>
+            <div class="p-4 pt-5">
+                <ul class="list-unstyled components mb-5">
+                    <li class="active">
+                        <a href="@Url.Action("Index","Order")" data-container="body" data-toggle="popover" data-placement="top" data-content="Lịch sử mua hàng">
+                            <i class="fa fa-shopping-cart mr-2"></i>
+                            Đơn mua
+                        </a>
+                    </li>
+                    <li>
+                        <a href="@Url.Action("Index","Voucher")" data-container="body" data-toggle="popover" data-placement="top" data-content="Voucher của bạn">
+                            <i class="fa fa-ticket mr-2"></i>
+                            Kho Voucher
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        <div id="content" class="flex-fill ml-2">
+            <section id="sec-main">
+                <!--tab-main-->
+                <nav class="navbarTab navbar-expand-lg mb-3">
+                    <ul class="nav sticky-top hovertab">
+                        @{
+                            List<string> tranStatus(string status)
+                            {
+                                switch (status)
+                                {
+                                    case StatusConst.WAITCONFIRM:
+                                        return new List<string>() { StatusConst.WAITCONFIRM };
+                                    case StatusConst.WAITSETUP:
+                                    case StatusConst.WAITSHIP:
+                                        return new List<string>() { StatusConst.WAITSETUP, StatusConst.WAITSHIP };
+                                    case StatusConst.SHIPPING:
+                                    case StatusConst.DELIVERED:
+                                        return new List<string>() { StatusConst.SHIPPING, StatusConst.DELIVERED };
+                                    case StatusConst.DONE:
+                                        return new List<string>() { StatusConst.DONE };
+                                    case StatusConst.CANCEL:
+                                        return new List<string>() { StatusConst.CANCEL };
+                                    case StatusConst.RETURN:
+                                        return new List<string>() { StatusConst.RETURN };
+                                }
+                                return new List<string>() { StatusConst.WAITCONFIRM };
+                            }
+                        }
+                        @*Tất cả*@
+                        <li class="nav-item col p-0 text-center font-weight-bold">
+                            <a class="avatar avatar-badge nav-link bg-transparent w-100 h-100 py-3 @(ViewBag.Active == "all" ? "active" : "")" data-toggle="tab" href="#tab_all">
+                                Tất cả
+                                @if (Model.Count() > 0)
+                                {
+                                    <span class="badge badge-indicator badge-warning font-weight-bold mx-3 my-2">@(Model.Count())</span>
+                                }
+                            </a>
+
+                        </li>
+                        @*Trạng thái*@
+                        @foreach (var item in ViewBag.StatusList as Dictionary<string, string>)
+                        {
+                            <li class="nav-item col p-0 text-center font-weight-bold">
+                                <a class="avatar avatar-badge nav-link bg-transparent w-100 h-100 py-3 @(tranStatus(item.Key).Contains(ViewBag.Active) ? "active" : "")" data-toggle="tab" href="#tab_@(item.Key)">
+                                    @item.Value
+                                    @if (Model.Where(o => tranStatus(item.Key).Contains(o.Status))?.Count() > 10)
+                                    {
+                                        <span class="badge badge-indicator badge-danger font-weight-bold mx-3 my-2">@(Model.Where(o => tranStatus(item.Key).Contains(o.Status))?.Count())</span>
+                                    }
+                                    else if (Model.Where(o => tranStatus(item.Key).Contains(o.Status))?.Count() > 0)
+                                    {
+                                        <span class="badge badge-indicator badge-warning font-weight-bold mx-3 my-2">@(Model.Where(o => tranStatus(item.Key).Contains(o.Status))?.Count())</span>
+                                    }
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="tab_all">
+                        @Html.Partial("_StatusPartial", Model)
+                    </div>
+                    @foreach (var item in ViewBag.StatusList as Dictionary<string, string>)
+                    {
+                        var modelFilter = Model.Where(o => tranStatus(item.Key).Contains(o.Status)).ToList();
+                        var pageNumberFilter = 1; // Set the page number
+                        var pageSizeFilter = 8;
+                        var pagedModelFilter = new PagedList.PagedList<FashionShop.Models.Order>(modelFilter, pageNumberFilter, pageSizeFilter);
+                        <div class="tab-pane fade @(tranStatus(item.Key).Contains(ViewBag.Active) ? "show active" : "")" id="tab_@item.Key">
+                            @Html.Partial("_StatusPartial", pagedModelFilter)
+                        </div>
+                    }
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+<!--Modal Detail-->
+<div class="modal fade bd-example-modal-xl" id="order-detail-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-modal="true">
+
+</div>
+<!-- Modal Confirm Detail -->
+<div class="modal fade" id="order-confirm-delivered-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" style="z-index:10000 !important">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="post" action="@Url.Action("ConfirmDelivered")">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Xác nhận đơn hàng</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Bạn chắc chắn xác nhận nhận hàng?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Hủy</button>
+                    <input type="hidden" id="confirmdeliveredid" name="id" />
+                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Modal cancel-->
+<div class="modal fade" id="order-cancel-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content text-center">
+            <form method="post" action="@Url.Action("Cancel")">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Hủy đơn hàng</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                        <label class="btn btn-light badge-light rounded-pill" id="option1">
+                            <input type="radio" name="reason" value="Muốn đổi sản phẩm khác"> Muốn đổi sản phẩm khác
+                        </label>
+                        <label class="btn btn-light badge-light rounded-pill" id="option2">
+                            <input type="radio" name="reason" value="Không còn nhu cầu nữa"> Không còn nhu cầu nữa
+                        </label>
+                        <label class="btn btn-light badge-light rounded-pill" id="option3">
+                            <input type="radio" name="reason" value="Đơn hàng xử lý quá lâu"> Đơn hàng xử lý quá lâu
+                        </label>
+                        <label class="btn btn-light badge-light rounded-pill" id="option4">
+                            <input type="radio" name="reason" value="@FashionShop.Shared.Const.REFUSEREASON"> Lý do khác
+                        </label>
+                    </div>
+                    <div class="form-group collapse mt-3" id="myCollapse" style="transition: all ease 1s">
+                        <input id="refusereason" type="text" class="form-control" name="refusereason" placeholder="Nhập lý do..." />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+                    <input type="hidden" id="cancelid" name="id" />
+                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script>
+        function openSecDetail(orderid) {
+            var id = orderid;
+            $.ajax({
+                url: '@Url.Action("Details")' + `/${id}`,
+                datatype: "json",
+                type: "GET",
+                async: true,
+                success: function (results) {
+                    $("#order-detail-modal").html("");
+                    $("#order-detail-modal").html(results);
+                    $("#order-detail-modal").modal();
+                },
+                error: function (xhr) {
+                    alert('error');
+                }
+            });
+        }
+        function openConfirmDelivered(orderid) {
+            var id = orderid;
+            $("#confirmdeliveredid").val(id);
+            $("#order-confirm-delivered-modal").modal();
+        }
+        function openCancel(orderid) {
+            var id = orderid;
+            $("#cancelid").val(id);
+            $("#order-cancel-modal").modal();
+        }
+
+            $(document).ready(function () {
+                    //toggle
+                $("#option1, #option2, #option3").click(function () {
+                    $("#myCollapse").hide();
+                });
+
+                $("#option4").click(function () {
+                    $("#myCollapse").show();
+                });
+                    //edit
+                    $(".edit").click(function (event) {
+                        var orderid = $(this).attr("data-orderid");
+                        var name = $("#name-" + orderid).val();
+                        var phone = $("#phone-" + orderid).val();
+                        var address = $("#address-" + orderid).val();
+
+                        $("#editid").val(orderid);
+                        $("#editname").val(name);
+                        $("#editphone").val(phone);
+                        $("#editaddress").val(address);
+                        //submit
+                        document.getElementById("submitbutton").type = "submit";
+                        $("#editModal").modal();
+                    });
+
+                $("#keyword").keyup(function () {
+                    var strkeyword = $('#keyword').val();
+                    $.ajax({
+                        url: '/Search/FindBanHang/',
+                        datatype: "json",
+                        type: "POST",
+                        data: { keyword: strkeyword },
+                        async: true,
+                        success: function (results) {
+                            $("#records_table").html("");
+                            $("#records_table").html(results);
+                        },
+                        error: function (xhr) {
+                            alert('error');
+                        }
+                    });
+                });
+            });
+    </script>
+}

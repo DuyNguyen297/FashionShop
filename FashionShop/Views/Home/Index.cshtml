@@ -1,0 +1,188 @@
+﻿@using FashionShop.Models
+@model List<FashionShop.Models.Product>
+@{
+    ViewData["Title"] = "Trang chủ";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@section Styles{
+    <link rel="stylesheet" href="~/Content/home/css/style.css">
+}
+<!-- Start Banner Hero -->
+<div id="template-mo-jassa-hero-carousel" class="carousel slide carousel-fade carousel-dark" data-mdb-ride="carousel">
+
+    <ol class="carousel-indicators">
+        @foreach (var item in (ViewBag.Slide as List<Slide>))
+        {
+            <li data-target="#template-mo-jassa-hero-carousel" data-slide-to="@(item.SeqNum)" class="bg-dark @(item.Id == (ViewBag.Slide as List<Slide>)?[0]?.Id ? "active" : "")"></li>
+        }
+    </ol>
+    <div class="carousel-inner rounded-lg shadow-lg">
+        @foreach (var item in (ViewBag.Slide as List<Slide>))
+        {
+            <div class="carousel-item @(item.Id == (ViewBag.Slide as List<Slide>)?[0]?.Id ? "active" : "")">
+                <div class="container">
+                    <div class="row p-5 pt-0">
+                        <div class="mx-auto col-md-8 col-lg-6 order-lg-last">
+                            <img class="img-fluid w-100" src="~/Assets/images/slide/@(item.Image)" alt="@item.Name" style="height: 270px">
+                        </div>
+                        <div class="col-lg-6 mb-0 pl-4 d-flex align-items-center">
+                            <div class="text-align-left align-self-center">
+                                <h1 class="h1 text-success">@item.Title</h1>
+                                <p>
+                                    @item.Content
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    <a class="carousel-control-prev text-decoration-none w-auto p-3" href="#template-mo-jassa-hero-carousel" role="button" data-slide="prev">
+        <i class="fa-solid fa-chevron-left fa-2x text-muted"></i>
+    </a>
+    <a class="carousel-control-next text-decoration-none w-auto p-3" href="#template-mo-jassa-hero-carousel" role="button" data-slide="next">
+        <i class="fa-solid fa-chevron-right fa-2x text-muted"></i>
+    </a>
+</div>
+<!-- End Banner Hero -->
+<!-- Start Categories of The Month -->
+<section>
+    <div class="container py-5">
+        <div class="row text-center pt-3">
+            <div class="col-lg-6 m-auto">
+                <h1 class="h1 text-uppercase font-weight-bold">Thương hiệu lớn</h1>
+                <p>
+
+                </p>
+            </div>
+        </div>
+        <div class="row d-flex justify-content-around">
+            @{
+                var listOutstanding = (ViewBag.Branch as List<Branch>);
+            }
+            @foreach (var item in listOutstanding)
+            {
+                <div class="p-2 col-sm-3">
+                    <img class="img-fluid w-100 rounded border" src="~/Assets/images/branch/@(item.Image)" alt="@item.Name" style="height:170px">
+                    <h5 class="text-center mt-2 mb-2">@item.Name</h5>
+                    <div class="text-center"><a href="@Url.Action("Index", "Product", new {brandid = item.Id})" class="btn round-black-btn">Xem</a></div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+<!-- End Categories of The Month -->
+<!-- Banner -->
+@foreach (var item in (ViewBag.Banner as List<Banner>))
+{
+
+    <div class="hero-image w-100" style="background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('Assets/images/banner/@(item.Image)')">
+        <div class="hero-text">
+            <h1 class="text-light" style="font-size:55px;font-weight:800;text-shadow:0 1rem 3rem rgb(29 178 105 / 75%) !important">@item.Title</h1>
+            <p>@item.Content</p>
+        </div>
+    </div>
+}
+
+
+
+<!-- End Banner -->
+<!-- Start Featured Product -->
+<section>
+    <div class="container py-5">
+        <div class="row text-center py-3">
+            <div class="col-lg-6 m-auto">
+                <h1 class="h1 text-uppercase font-weight-bold">Sản phẩm nổi bật</h1>
+                <p>
+
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            @foreach (var item in (ViewBag.ProductOutstanding as List<Product>))
+            {
+                <div class="col-sm-2 mb-3 text-center mx-auto">
+                    <a href="@Url.Action("Details", "Product", new { id = item.Id})" class="text-reset">
+                        <div class="card h-100 card-feature">
+                            <div class="bg-image hover-zoom ripple ripple-surface ripple-surface-light"
+                                 data-mdb-ripple-color="light">
+                                <img src="~/Assets/images/product/@item.Image" alt="@item.Name"
+                                     class="card-img-top w-100" />
+                                <div class="position-relative">
+                                    <div class="mask">
+                                        <div class="d-flex justify-content-start align-items-end h-100">
+                                            <h5>
+                                                <span class="badge text-light badge-primary ml-sm-1">New</span>
+                                                <span class="badge text-light badge-danger">Eco</span>
+                                            </h5>
+                                        </div>
+                                    </div>
+                                    <div class="hover-overlay">
+                                        <div class="mask" style="background-color: rgba(251, 251, 251, 0.15);"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body p-1" style="font-size:0.8rem">
+                                <div class="">
+                                    <span class="fw-bold">@(item.Name?.Count() >= 24 ? item.Name?.Substring(0, 24) + "..." : item.Name)</span>
+                                </div>
+                                <div class="mb-1">
+                                    <span>@(item.Branch?.Name)</span>
+                                </div>
+                                <h6 class="py-sm-1">
+                                    @if (item.Discount != null && item.Discount != 0)
+                                    {
+                                        <span class="text-muted fw-normal text-decoration-line-through">@((item.Price)?.ToString("n0"))</span>
+                                    }
+                                    <span class="m-gg">@((item.Price - (item.Discount ?? 0))?.ToString("n0"))</span>
+                                </h6>
+                                <div class="ratings d-flex flex-row justify-content-around align-items-center">
+                                    <div class="d-flex flex-row">
+                                        @{
+                                            double RoundToNearestHalf(double number)
+                                            {
+                                                // Làm tròn số về đơn vị 0.5
+                                                return Math.Round(number * 2, MidpointRounding.AwayFromZero) / 2;
+                                            }
+                                        }
+                                        @{
+                                            var avg = item.Feedbacks?.Average(f => f.Rate);
+                                            avg = RoundToNearestHalf(avg ?? 0);
+                                            if (avg == 0)
+                                            {
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                            }
+                                            else
+                                            {
+                                                for (int i = 1; i <= avg; i++)
+                                                {
+                                                    <i class="fas fa-star"></i>
+                                                    if (avg - i == 0.5)
+                                                    {
+                                                        <i class="fa-solid fa-star-half-stroke"></i>
+                                                    }
+                                                }
+                                                for (int i = 1; i <= 5 - avg; i++)
+                                                {
+                                                    <i class="far fa-star"></i>
+                                                }
+                                            }
+                                        }
+                                    </div>
+                                    <span>24 reviews</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+
+        </div>
+    </div>
+</section>
+<!-- End Featured Product -->
